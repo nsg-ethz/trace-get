@@ -212,7 +212,7 @@ class CaidaTraceDownload(npyscreen.Form):
             self.slider.display()
 
 
-        result, q = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+        result, q, pool = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
 
         while True:
             if result.ready():
@@ -221,6 +221,8 @@ class CaidaTraceDownload(npyscreen.Form):
                 size = q.qsize()
                 self.slider.value = size
                 self.slider.display()
+
+        pool.terminate()
 
         if "unzip" in caida_state.processing_options:
             self.parentApp.switchForm("TraceUnzip")
@@ -243,9 +245,9 @@ class CaidaTraceUnzip(npyscreen.Form):
             self.slider.entry_widget.out_of = len(caida_state.to_unzip)
             self.slider.display()
 
-        ipdb.set_trace()
+        #ipdb.set_trace()
+        result, q, pool = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
 
-        result, q = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
 
         while True:
             if result.ready():
@@ -255,7 +257,7 @@ class CaidaTraceUnzip(npyscreen.Form):
                 self.slider.value = size
                 self.slider.display()
 
-        ipdb.set_trace()
+        pool.terminate()
 
         self.parentApp.switchForm("End")
 

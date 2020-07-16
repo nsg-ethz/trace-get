@@ -127,6 +127,9 @@ util functions
 
 def get_zipped_files(path, extension = ".gz"):
 
+    if not path:
+        path = "."
+
     with cwd(path):
         files_to_unzip = [x for x in glob.glob("*") if x.endswith(extension)]
 

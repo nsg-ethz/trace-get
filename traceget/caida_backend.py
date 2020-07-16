@@ -210,7 +210,7 @@ def slider_donwload(list_of_links, path, auth, processes=5):
 
     result = pool.map_async(download_in_path_with_queue, args)
 
-    return result, q
+    return result, q, pool
 
 
 def rename_pcaps(preamble):
@@ -285,8 +285,9 @@ def slider_unzip(files_to_unzip, path, processes=5):
     for file_to_unzip in files_to_unzip:
         args.append(("gunzip {}".format(file_to_unzip), path, q))
 
-    result = pool.map_async(call_in_path, args)
-    return result, q
+    result = pool.map_async(call_in_path_queue, args)
+
+    return result, q, pool
 
 
 """

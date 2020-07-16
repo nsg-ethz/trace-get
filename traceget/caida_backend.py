@@ -269,6 +269,25 @@ def download_missing_traces(path_to_check, url, num_cores=5):
 Uncompressing
 """
 
+def call_in_path_queue(args):
+
+    cmd, path, q = args
+    call_in_path(cmd, path)
+    q.put(1)
+
+def slider_unzip(files_to_unzip, path, processes=5):
+
+    pool = multiprocessing.Pool(processes)
+    manager = multiprocessing.Manager()
+    q = manager.Queue()
+
+    args = []
+    for file_to_unzip in files_to_unzip:
+        args.append(("gunzip {}".format(file_to_unzip), path, q))
+
+    result = pool.map_async(call_in_path, args)
+    return result, q
+
 
 """
 Merging

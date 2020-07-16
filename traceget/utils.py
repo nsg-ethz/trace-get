@@ -25,7 +25,7 @@ def download_in_path_with_queue(args):
 
 def download_in_path(url, path, auth):
     time.sleep(random.randint(1,15))
-    print("Start Downloading: ", url)
+    #print("Start Downloading: ", url)
     cmd = 'wget --quiet --user {} --password {} {}'.format(auth[0], auth[1],url)
     call_in_path(cmd, path)
 
@@ -124,9 +124,17 @@ def find_files_in_dir(dir, regex=".*pcap"):
 """
 util functions
 """
-def unzip_pcaps(path_to_unzip, extension = "pcap.gz", num_cores=24):
-    with cwd(path_to_unzip):
+
+def get_zipped_files(path, extension = ".gz"):
+
+    with cwd(path):
         files_to_unzip = [x for x in glob.glob("*") if x.endswith(extension)]
+
+    return files_to_unzip
+
+def unzip_pcaps(path_to_unzip, extension = "pcap.gz", num_cores=24):
+
+    files_to_unzip = get_zipped_files(path_to_unzip, extension)
 
     pool = multiprocessing.Pool(num_cores)
     for pcap in files_to_unzip:

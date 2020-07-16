@@ -163,7 +163,12 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
         caida_state.download_types = self.download_types.get_selected_objects()
         caida_state.processing_options = self.processing_options.get_selected_objects()
 
-        self.parentApp.switchForm("TraceDownload")
+        if "download" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceDownload")
+        elif "unzip" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceUnzip")
+        else:
+            self.parentApp.switchForm("End")
 
     def create(self):
 
@@ -172,8 +177,8 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
         self.download_types = self.add(npyscreen.TitleMultiSelect, max_height =8, value = [0], name="Select Download Types",
                 values = ["pcaps","timestamps","stats"], scroll_exit=True)
 
-        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0,1], name="Post Processing Options",
-                                values=["uncompress", "merge"], scroll_exit=True)
+        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0,1,2], name="Post Processing Options",
+                                values=["download", "unzip", "merge"], scroll_exit=True)
 
 
 class CaidaTraceDownload(npyscreen.Form):
@@ -217,19 +222,45 @@ class CaidaTraceDownload(npyscreen.Form):
                 self.slider.value = size
                 self.slider.display()
 
+        if "unzip" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceUnzip")
+        else:
+            self.parentApp.switchForm("End")
+
+
+    def create(self):
+        self.slider  = self.add(npyscreen.TitleSlider, out_of = 100, name = "Download Traces Progress: ", rely=15)
+
+
+class CaidaTraceUnzip(npyscreen.Form):
+
+    def activate(self):
+
+        caida_state = self.parentApp.get_caida_base()
+        caida_state.to_unzip = get_zipped_files(caida_state.root_out_path, ".gz")
+
+        if len(caida_state.to_unzip):
+            self.slider.entry_widget.out_of = len(caida_state.to_unzip)
+            self.slider.display()
+
+
+        result, q = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
+
+        while True:
+            if result.ready():
+                break
+            else:
+                size = q.qsize()
+                self.slider.value = size
+                self.slider.display()
+
+        ipdb.set_trace()
+
         self.parentApp.switchForm("End")
 
 
     def create(self):
-        #self.download_links = self.selected_links_to_download_links()
-        self.slider  = self.add(npyscreen.TitleSlider, out_of = 100, name = "Download Traces Progress: ", rely=15)
-
-
-class CaidaTraceUncompress(npyscreen.Form):
-
-    def create(self):
-        pass
-
+        self.slider  = self.add(npyscreen.TitleSlider, out_of = 100, name = "Unzipping Files Progress ", rely=15)
 
 class CaidaTraceMerge(npyscreen.Form):
 
@@ -260,7 +291,7 @@ class CaidaApp(npyscreen.NPSAppManaged):
 
         # Download, uncompress, and merge
         self.addForm("TraceDownload", CaidaTraceDownload, name="Downloading Traces")
-        self.addForm("TraceUncompress", CaidaTraceUncompress, name="Uncompressing Traces")
+        self.addForm("TraceUnzip", CaidaTraceUnzip, name="Unzipping Traces")
         self.addForm("TraceMege", CaidaTraceMerge, name="Merging Traces")
         self.addForm("End", CaidaEnd, name="Done!")
 

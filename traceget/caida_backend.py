@@ -213,29 +213,35 @@ def slider_donwload(list_of_links, path, auth, processes=5):
     return result, q, pool
 
 
-def check_not_downloaded_traces(path_to_check, url):
+def check_not_downloaded_files(path_to_check, files_to_download):
 
     with cwd(path_to_check):
-        currently_downloaded_traces = glob.glob(".pcap")
+        currently_downloaded_files = glob.glob("*")
 
     tmp = []
-    for x in currently_downloaded_traces:
+    for x in currently_downloaded_files:
         if x.endswith(".pcap"):
             tmp.append(x+".gz")
         elif x.endswith(".pcap.gz"):
             tmp.append(x)
+        elif x.endswith(".times"):
+            tmp.append(x + ".gz")
+        elif x.endswith("times.gz"):
+            tmp.append(x)
+        else:
+            tmp.append(x)
 
     currently_downloaded_traces = tmp[:]
 
-    to_download = []
-    for x in listLinks(url[1], url[2], 'UTC/'):
-        for y in listLinks(x, url[2], 'pcap.gz'):
-            to_download.append(y)
+    not_downloaded = []
 
-    to_download = [x.strip().split("/")[-1] for x in to_download]
+    for file in files_to_download:
+        if any(x in file for x in currently_downloaded_traces):
+            pass
+        else:
+            not_downloaded.append(file)
 
-    not_downloaded = set(to_download).difference(set(currently_downloaded_traces))
-    return list(not_downloaded)
+    return not_downloaded
 
 
 def rename_pcaps(preamble):

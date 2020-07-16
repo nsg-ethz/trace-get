@@ -212,7 +212,7 @@ class CaidaTraceDownload(npyscreen.Form):
             self.slider.display()
 
 
-        result, q, pool = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+        result, q, pool = slider_donwload([], caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
 
         while True:
             if result.ready():
@@ -224,8 +224,30 @@ class CaidaTraceDownload(npyscreen.Form):
 
         pool.terminate()
 
-
         # check if things are downloaded as we wanted
+        download_again = check_not_downloaded_files(caida_state.root_out_path, self.download_links)
+        while download_again:
+
+            self.name = "Downloading Traces Again...."
+            self.display()
+
+            if len(self.download_links):
+                self.slider.entry_widget.out_of = len(download_again)
+                self.slider.display()
+
+
+            result, q, pool = slider_donwload(download_again, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+
+            while True:
+                if result.ready():
+                    break
+                else:
+                    size = q.qsize()
+                    self.slider.value = size
+                    self.slider.display()
+
+            pool.terminate()
+            download_again = check_not_downloaded_files(caida_state.root_out_path, self.download_links)
 
 
         if "unzip" in caida_state.processing_options:
@@ -262,7 +284,11 @@ class CaidaTraceUnzip(npyscreen.Form):
 
         pool.terminate()
 
-        self.parentApp.switchForm("End")
+
+        if "merge" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceMerge")
+        else:
+            self.parentApp.switchForm("End")
 
 
     def create(self):

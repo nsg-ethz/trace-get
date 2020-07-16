@@ -6,6 +6,7 @@ import multiprocessing
 import time, random
 import requests
 import ipdb
+import glob
 
 from bs4 import BeautifulSoup
 
@@ -16,9 +17,14 @@ from traceget.logger import log
 """
 Page Interaction
 """
+def download_in_path_with_queue(args):
+    url, path, auth, q = args
+    #time.sleep(2)
+    download_in_path(url, path, auth)
+    q.put(1)
 
 def download_in_path(url, path, auth):
-    time.sleep(random.randint(1,20))
+    time.sleep(random.randint(1,15))
     print("Start Downloading: ", url)
     cmd = 'wget --quiet --user {} --password {} {}'.format(auth[0], auth[1],url)
     call_in_path(cmd, path)

@@ -119,10 +119,10 @@ def get_available_links(url, session = None, auth=None):
 
     links = soup.find_all("a")
 
-    download_links = {"pcap": [], "timestamps": [], "stats": []}
+    download_links = {"pcaps": [], "timestamps": [], "stats": []}
     for link in links:
         if link.text.endswith("pcap.gz"):
-            download_links["pcap"].append((link.text, url + link.get("href")))
+            download_links["pcaps"].append((link.text, url + link.get("href")))
         elif link.text.endswith("times.gz"):
             download_links["timestamps"].append((link.text, url + link.get("href")))
         elif link.text.endswith("pcap.stats"):
@@ -195,8 +195,24 @@ def get_links_tree(main_url, auth=None):
     #return trace_links_tree
 
 """
-Graphical Interface Stuff
+Download Stuff
 """
+
+def slider_donwload(list_of_links, path, auth, processes=5):
+
+    pool = multiprocessing.Pool(20)
+    manager = multiprocessing.Manager()
+    q = manager.Queue()
+
+    args = []
+    for link in list_of_links:
+        args.append((link, path + "/", auth, q))
+
+    result = pool.map_async(download_in_path_with_queue, args)
+
+    return result, q
+
+
 
 def rename_pcaps(preamble):
 
@@ -249,6 +265,16 @@ def download_missing_traces(path_to_check, url, num_cores=5):
                 if any(link.endswith(x) for x in missing_traces):
                     pool.apply_async(download_in_path, (link, path_to_check, auth), {})
 
+
+"""
+Uncompressing
+"""
+
+
+"""
+Merging
+"""
+
 def merge_same_day_pcaps(path_to_dir="."):
 
     with cwd(path_to_dir):
@@ -286,15 +312,3 @@ def merge_same_day_pcaps(path_to_dir="."):
             if dirB:
                 pool.apply_async(merge_pcaps, (dirB, "{}.dirB.{}.pcap".format(linkName, day)), {})
 
-def main(num_cores=5, urls = []):
-    pool = multiprocessing.Pool(num_cores)
-
-    for name, url, auth in urls:
-        #print name, url, auth
-        os.system("mkdir -p {}".format(name))
-        for first_link in listLinks(url, auth, 'UTC/')[:2]:
-            print(first_link)
-            links = listLinks(first_link, auth, 'pcap.gz')
-            for link in links:
-                print('downloading: ', link)
-                pool.apply_async(download_in_path, (link, name+"/", auth), {})

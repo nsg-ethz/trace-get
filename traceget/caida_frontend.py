@@ -243,6 +243,7 @@ class CaidaTraceUnzip(npyscreen.Form):
             self.slider.entry_widget.out_of = len(caida_state.to_unzip)
             self.slider.display()
 
+        ipdb.set_trace()
 
         result, q = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
 

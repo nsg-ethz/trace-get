@@ -224,6 +224,10 @@ class CaidaTraceDownload(npyscreen.Form):
 
         pool.terminate()
 
+
+        # check if things are downloaded as we wanted
+
+
         if "unzip" in caida_state.processing_options:
             self.parentApp.switchForm("TraceUnzip")
         else:
@@ -247,7 +251,6 @@ class CaidaTraceUnzip(npyscreen.Form):
 
         #ipdb.set_trace()
         result, q, pool = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
-
 
         while True:
             if result.ready():

@@ -164,7 +164,7 @@ def merge_pcaps(global_dir, output_file):
         subprocess.call(cmd, shell=True)
 
 
-def merge_pcaps(pcap_files, output_file):
+def merge_pcaps_from_list(pcap_files, output_file):
     """
     Merges a list of pcap files into one
     Args:

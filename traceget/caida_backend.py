@@ -200,7 +200,7 @@ Download Stuff
 
 def slider_donwload(list_of_links, path, auth, processes=5):
 
-    pool = multiprocessing.Pool(20)
+    pool = multiprocessing.Pool(processes)
     manager = multiprocessing.Manager()
     q = manager.Queue()
 
@@ -211,7 +211,6 @@ def slider_donwload(list_of_links, path, auth, processes=5):
     result = pool.map_async(download_in_path_with_queue, args)
 
     return result, q
-
 
 
 def rename_pcaps(preamble):

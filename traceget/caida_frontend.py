@@ -206,16 +206,8 @@ class CaidaTraceDownload(npyscreen.Form):
             self.slider.entry_widget.out_of = len(self.download_links)
             self.slider.display()
 
-        pool = multiprocessing.Pool(20)
 
-        manager = multiprocessing.Manager()
-        q = manager.Queue()
-
-        args = []
-        for link in self.download_links:
-            args.append((link, caida_state.root_out_path+"/", (caida_state.username, caida_state.password), q))
-
-        result = pool.map_async(download_in_path_with_queue, args)
+        result, q = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
 
         while True:
             if result.ready():

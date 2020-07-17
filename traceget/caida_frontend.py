@@ -1,6 +1,9 @@
-import npyscreen
 import queue
+
+import npyscreen
+
 from traceget.caida_backend import *
+
 
 class CaidaDataBase(object):
 
@@ -9,14 +12,16 @@ class CaidaDataBase(object):
         self.password = ""
         self.selected_links = ""
 
+
 class MainForm(npyscreen.ActionForm):
 
     def create(self):
         self.parentApp.setNextForm("Login")
 
+
 class CaidaLogin(npyscreen.ActionForm):
 
-    #def activate(self):
+    # def activate(self):
     #    self.edit()
 
     def create(self):
@@ -24,7 +29,6 @@ class CaidaLogin(npyscreen.ActionForm):
         self.password = self.add(npyscreen.TitlePassword, name="Password: ")
 
     def on_ok(self):
-
         caida_db = self.parentApp.get_caida_base()
         caida_db.username = self.username.value
         caida_db.password = self.password.value
@@ -33,12 +37,13 @@ class CaidaLogin(npyscreen.ActionForm):
     def on_cancel(self):
         self.parentApp.setNextForm(None)
 
+
 class CaidaLoadLinks(npyscreen.ActionForm):
 
     def update_slider(self, total_time=30, q=None):
 
         value = 0
-        delta = total_time/float(100)
+        delta = total_time / float(100)
 
         self.slider.value = value
         while value < 100:
@@ -50,7 +55,7 @@ class CaidaLoadLinks(npyscreen.ActionForm):
                 self.slider.display()
                 time.sleep(0.5)
             else:
-                value = min(100, value+1)
+                value = min(100, value + 1)
                 self.slider.value = value
                 self.slider.display()
 
@@ -60,7 +65,7 @@ class CaidaLoadLinks(npyscreen.ActionForm):
 
         q = queue.Queue()
 
-        t = threading.Thread(target=self.update_slider, args=(30,q))
+        t = threading.Thread(target=self.update_slider, args=(30, q))
         t.start()
 
         tree = get_links_tree("https://www.caida.org/data/passive/passive_dataset_download.xml",
@@ -78,10 +83,10 @@ class CaidaLoadLinks(npyscreen.ActionForm):
             self.parentApp.switchForm("Login")
         else:
             self.parentApp.switchForm("AvailableTraces")
-        #available_traces = tree.keys()
+        # available_traces = tree.keys()
 
     def create(self):
-        self.slider  = self.add(npyscreen.TitleSlider, out_of=100, name = "Download Progress: ", rely=15)
+        self.slider = self.add(npyscreen.TitleSlider, out_of=100, name="Download Progress: ", rely=15)
 
     def on_cancel(self):
         self.parentApp.setNextForm(None)
@@ -134,7 +139,6 @@ class CaidaTracesDisplay(npyscreen.ActionFormV2):
         else:
             self.parentApp.switchForm("LoadLinks")
 
-
     def on_ok(self):
         caida_state = self.parentApp.get_caida_base()
         caida_state.selected_links = self.wgtree.get_selected_objects()
@@ -143,9 +147,9 @@ class CaidaTracesDisplay(npyscreen.ActionFormV2):
     def on_cancel(self):
         self.parentApp.switchForm(None)
 
-
     def create(self):
-        self.wgtree = self.add(npyscreen.MLTreeMultiSelect, max_height=-2, name="Available Trace Options", scroll_exit = True)
+        self.wgtree = self.add(npyscreen.MLTreeMultiSelect, max_height=-2, name="Available Trace Options",
+                               scroll_exit=True)
 
 
 class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
@@ -173,17 +177,18 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
 
     def create(self):
 
-        self.root_out_path = self.add(npyscreen.TitleFilename, name = "Output Path: ", use_to_lines=True)
+        self.root_out_path = self.add(npyscreen.TitleFilename, name="Output Path: ", use_to_lines=True)
 
-        self.download_types = self.add(npyscreen.TitleMultiSelect, max_height =8, value = [0], name="Select Download Types",
-                values = ["pcaps","timestamps","stats"], scroll_exit=True)
+        self.download_types = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0],
+                                       name="Select Download Types",
+                                       values=["pcaps", "timestamps", "stats"], scroll_exit=True)
 
-        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0,1,2,3], name="Post Processing Options",
-                                values=["download", "unzip", "merge", "clean"], scroll_exit=True)
+        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0, 1, 2, 3],
+                                           name="Post Processing Options",
+                                           values=["download", "unzip", "merge", "clean"], scroll_exit=True)
 
 
 class CaidaTraceDownload(npyscreen.Form):
-
 
     def selected_links_to_download_links(self):
 
@@ -201,19 +206,18 @@ class CaidaTraceDownload(npyscreen.Form):
 
         return download_links
 
-
     def activate(self):
 
         caida_state = self.parentApp.get_caida_base()
-        self.download_links  = self.selected_links_to_download_links()
+        self.download_links = self.selected_links_to_download_links()
         caida_state.download_links = self.download_links
 
         if len(self.download_links):
             self.slider.entry_widget.out_of = len(self.download_links)
             self.slider.display()
 
-
-        result, q, pool = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+        result, q, pool = slider_donwload(self.download_links, caida_state.root_out_path,
+                                          (caida_state.username, caida_state.password), 5)
 
         while True:
             if result.ready():
@@ -236,8 +240,8 @@ class CaidaTraceDownload(npyscreen.Form):
                 self.slider.entry_widget.out_of = len(download_again)
                 self.slider.display()
 
-
-            result, q, pool = slider_donwload(download_again, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+            result, q, pool = slider_donwload(download_again, caida_state.root_out_path,
+                                              (caida_state.username, caida_state.password), 5)
 
             while True:
                 if result.ready():
@@ -250,15 +254,13 @@ class CaidaTraceDownload(npyscreen.Form):
             pool.terminate()
             download_again = check_not_downloaded_files(caida_state.root_out_path, self.download_links)
 
-
         if "unzip" in caida_state.processing_options:
             self.parentApp.switchForm("TraceUnzip")
         else:
             self.parentApp.switchForm("End")
 
-
     def create(self):
-        self.slider  = self.add(npyscreen.TitleSlider, out_of = 100, name = "Download Traces Progress: ", rely=15)
+        self.slider = self.add(npyscreen.TitleSlider, out_of=100, name="Download Traces Progress: ", rely=15)
 
 
 class CaidaTraceUnzip(npyscreen.Form):
@@ -272,7 +274,7 @@ class CaidaTraceUnzip(npyscreen.Form):
             self.slider.entry_widget.out_of = len(caida_state.to_unzip)
             self.slider.display()
 
-        #ipdb.set_trace()
+        # ipdb.set_trace()
         result, q, pool = slider_unzip(caida_state.to_unzip, caida_state.root_out_path, 16)
 
         while True:
@@ -285,26 +287,24 @@ class CaidaTraceUnzip(npyscreen.Form):
 
         pool.terminate()
 
-
         if "merge" in caida_state.processing_options:
             self.parentApp.switchForm("TraceMerge")
         else:
             self.parentApp.switchForm("End")
 
-
     def create(self):
-        self.slider  = self.add(npyscreen.TitleSlider, out_of = 100, name = "Unzipping Files Progress ", rely=15)
+        self.slider = self.add(npyscreen.TitleSlider, out_of=100, name="Unzipping Files Progress ", rely=15)
+
 
 class CaidaTraceMerge(npyscreen.Form):
 
     def activate(self):
-
         caida_state = self.parentApp.get_caida_base()
 
         # merge files
         clean = False
         if "clean" in caida_state.processing_options:
-            clean=True
+            clean = True
 
         merge_same_day_files(caida_state.root_out_path, "pcap", clean)
         merge_same_day_files(caida_state.root_out_path, "times", clean)
@@ -345,8 +345,10 @@ class CaidaApp(npyscreen.NPSAppManaged):
     def get_caida_base(self):
         return self.caida_base
 
+
 def main():
     npyscreen.wrapper(CaidaApp().run())
+
 
 if __name__ == "__main__":
     main()

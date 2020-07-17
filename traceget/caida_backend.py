@@ -1,10 +1,11 @@
-import dill
 import threading
-from queue import Queue
 from collections import OrderedDict
+from queue import Queue
 
-from traceget.utils import *
+import dill
+
 from traceget.logger import log
+from traceget.utils import *
 
 MAX_RETRY = 10
 
@@ -12,27 +13,28 @@ MAX_RETRY = 10
 Caida Links Database
 """
 
-def load_database(file_name):
 
+def load_database(file_name):
     if not is_database(file_name):
         return {}
     else:
         return dill.load(open(file_name, "rb"))
 
-def update_database(file_name, new_db):
 
+def update_database(file_name, new_db):
     dill.dump(new_db, open(file_name, "wb"))
 
 
 def is_database(file_name):
     return os.path.exists(file_name)
 
+
 """
 Get Page Links
 """
 
-def get_page_soup_with_checks(url, session=None, auth=None):
 
+def get_page_soup_with_checks(url, session=None, auth=None):
     current_retry = 0
     soup = get_page_soup(url, session, auth)
 
@@ -42,7 +44,7 @@ def get_page_soup_with_checks(url, session=None, auth=None):
 
     while is_service_unavailable(soup):
         current_retry += 1
-        time.sleep(current_retry*0.5)
+        time.sleep(current_retry * 0.5)
         soup = get_page_soup(url, session, auth)
 
         if current_retry == MAX_RETRY:
@@ -51,8 +53,8 @@ def get_page_soup_with_checks(url, session=None, auth=None):
 
     return soup
 
-def get_available_options(url, session = None, auth=None):
 
+def get_available_options(url, session=None, auth=None):
     soup = get_page_soup_with_checks(url, session, auth)
     if soup == -1:
         log.error("Failed to open caida main page {}".format(url))
@@ -70,8 +72,8 @@ def get_available_options(url, session = None, auth=None):
 
     return available_traces
 
-def get_available_locations(url, session = None, auth=None):
 
+def get_available_locations(url, session=None, auth=None):
     soup = get_page_soup_with_checks(url, session, auth)
     if not soup:
         log.debug("Failed to open equinix-location pages {}".format(url))
@@ -86,8 +88,8 @@ def get_available_locations(url, session = None, auth=None):
 
     return link_locations
 
-def get_available_days(url, session = None, auth=None):
 
+def get_available_days(url, session=None, auth=None):
     soup = get_page_soup_with_checks(url, session, auth)
     if not soup:
         log.debug("Failed to open days pages {}".format(url))
@@ -102,8 +104,8 @@ def get_available_days(url, session = None, auth=None):
 
     return day_links
 
-def get_available_links(url, session = None, auth=None):
 
+def get_available_links(url, session=None, auth=None):
     soup = get_page_soup_with_checks(url, session, auth)
     if not soup:
         log.debug("Failed to open traces/timestamps pages {}".format(url))
@@ -122,8 +124,8 @@ def get_available_links(url, session = None, auth=None):
 
     return download_links
 
-def get_links_tree_worker(location_info, auth=None, out_queue=None):
 
+def get_links_tree_worker(location_info, auth=None, out_queue=None):
     session = requests.session()
     session.auth = auth
     trace_links_tree = OrderedDict()
@@ -131,7 +133,7 @@ def get_links_tree_worker(location_info, auth=None, out_queue=None):
     locations = get_available_locations(location_info[1], session, auth)
 
     if not locations:
-        #out_queue.put((location_info, None))
+        # out_queue.put((location_info, None))
         return
 
     for location_name, location_link in locations:
@@ -153,8 +155,8 @@ def get_links_tree_worker(location_info, auth=None, out_queue=None):
     out_queue.put((location_info, trace_links_tree))
     return
 
-def get_links_tree(main_url, auth=None):
 
+def get_links_tree(main_url, auth=None):
     now = time.time()
 
     trace_links_tree = OrderedDict()
@@ -164,9 +166,8 @@ def get_links_tree(main_url, auth=None):
     threads = []
 
     for option_name, option_link in options:
-
         t = threading.Thread(target=get_links_tree_worker, args=((option_name, option_link), auth, queue))
-        time.sleep(random.uniform(0.1,0.3))
+        time.sleep(random.uniform(0.1, 0.3))
         threads.append(t)
         t.start()
 
@@ -184,14 +185,15 @@ def get_links_tree(main_url, auth=None):
 
     print("runtime: ", time.time() - now)
     return trace_links_tree
-    #return trace_links_tree
+    # return trace_links_tree
+
 
 """
 Download Stuff
 """
 
-def slider_donwload(list_of_links, path, auth, processes=5):
 
+def slider_donwload(list_of_links, path, auth, processes=5):
     pool = multiprocessing.Pool(processes)
     manager = multiprocessing.Manager()
     q = manager.Queue()
@@ -206,14 +208,13 @@ def slider_donwload(list_of_links, path, auth, processes=5):
 
 
 def check_not_downloaded_files(path_to_check, files_to_download):
-
     with cwd(path_to_check):
         currently_downloaded_files = glob.glob("*")
 
     tmp = []
     for x in currently_downloaded_files:
         if x.endswith(".pcap"):
-            tmp.append(x+".gz")
+            tmp.append(x + ".gz")
         elif x.endswith(".pcap.gz"):
             tmp.append(x)
         elif x.endswith(".times"):
@@ -247,18 +248,19 @@ def rename_pcaps(preamble):
         cmd = "mv {} {}".format(current_name, new_name)
         call_in_path(cmd, ".")
 
+
 """
 Uncompressing
 """
 
-def call_in_path_queue(args):
 
+def call_in_path_queue(args):
     cmd, path, q = args
     call_in_path(cmd, path)
     q.put(1)
 
-def slider_unzip(files_to_unzip, path, processes=5):
 
+def slider_unzip(files_to_unzip, path, processes=5):
     pool = multiprocessing.Pool(processes)
     manager = multiprocessing.Manager()
     q = manager.Queue()
@@ -276,6 +278,7 @@ def slider_unzip(files_to_unzip, path, processes=5):
 Merging
 """
 
+
 def merge_times(times_files, output_file):
     """
     Merges a list of pcap files into one
@@ -292,9 +295,7 @@ def merge_times(times_files, output_file):
     run_cmd(cmd)
 
 
-
 def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
-
     same_day_files = {}
 
     to_clean = []
@@ -302,14 +303,14 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
     _FUNCTION = None
     if merge_type == "pcap":
         _FUNCTION = merge_pcaps_from_list
-    elif merge_type  == "times":
+    elif merge_type == "times":
         _FUNCTION = merge_times
 
     with cwd(path_to_dir):
         pool = multiprocessing.Pool(2)
         files_to_merge = [x for x in glob.glob("*") if x.endswith("UTC.anon.{}".format(merge_type))]
 
-        #aggregate per day and sort per time, and dir A and B
+        # aggregate per day and sort per time, and dir A and B
         for name in files_to_merge:
             day = name.split(".")[2].split("-")[0].strip()
             if same_day_files.get(day, False):
@@ -322,15 +323,15 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
             tmp = same_day_files[element][:]
             same_day_files[element] = sorted(tmp, key=lambda x: int(x.split("-")[-1].split(".")[0].strip()))
 
-        #sort per dirA and B
+        # sort per dirA and B
         for day, files in same_day_files.items():
 
             dirA = [x for x in files if 'dirA' in x]
             dirB = [x for x in files if 'dirB' in x]
 
             if clean:
-                to_clean +=dirA
-                to_clean +=dirB
+                to_clean += dirA
+                to_clean += dirB
 
             if dirA:
                 linkName = dirA[0].split(".")[0].strip()
@@ -356,6 +357,3 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
     pool.close()
     pool.join()
     pool.terminate()
-
-
-

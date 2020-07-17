@@ -161,6 +161,9 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
         caida_state.download_types = self.download_types.get_selected_objects()
         caida_state.processing_options = self.processing_options.get_selected_objects()
 
+        # make directory
+        subprocess.call("mkdir {}".format(caida_state.root_out_path), shell=True)
+
         if "download" in caida_state.processing_options:
             self.parentApp.switchForm("TraceDownload")
         elif "unzip" in caida_state.processing_options:

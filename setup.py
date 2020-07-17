@@ -21,7 +21,7 @@ setup(
     author_email='cedgar@ethz.ch',
     packages=find_packages(),
     long_description=readme(),
-    # entry_points={'console_scripts': ['caida-trace-downloader = x']},
+    entry_points={'console_scripts': ['traceget = traceget.caida_frontend:main']},
     include_package_data=True,
     classifiers=[
         "License :: OSI Approved :: BSD License",
@@ -35,7 +35,9 @@ setup(
     install_requires=[
         'setuptools',
         'bs4',
-        'npyscreen'
+        'npyscreen',
+        'dill',
+        'requests'
     ],
     extras_require={}
 )

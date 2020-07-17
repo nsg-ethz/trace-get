@@ -5,7 +5,6 @@ import subprocess
 import multiprocessing
 import time, random
 import requests
-import ipdb
 import glob
 
 from bs4 import BeautifulSoup

@@ -1,18 +1,10 @@
-import os
-import time
 import dill
-import glob
 import threading
 from queue import Queue
 from collections import OrderedDict
 
 from traceget.utils import *
 from traceget.logger import log
-
-
-cedgar = ('cedgar@ethz.ch', 'VtDwd2^GQaGWM3PoC2')
-laurent = ('lvanbever@ethz.ch', 'EPs2NF6nRiZF')
-thomas = ('thomahol@ethz.ch', '1JDju69S99')
 
 MAX_RETRY = 10
 
@@ -284,44 +276,6 @@ def slider_unzip(files_to_unzip, path, processes=5):
 Merging
 """
 
-def merge_same_day_pcaps(path_to_dir="."):
-
-    with cwd(path_to_dir):
-        pool = multiprocessing.Pool(2)
-        files_to_merge = [x for x in glob.glob("*") if x.endswith("UTC.anon.pcap")]
-
-        #aggregate per day and sort per time, and dir A and B
-        same_day_pcaps = {}
-        for name in files_to_merge:
-            day = name.split(".")[2].split("-")[0].strip()
-            if same_day_pcaps.get(day, False):
-
-                same_day_pcaps[day].append(name)
-            else:
-                same_day_pcaps[day] = [name]
-
-        for element in same_day_pcaps:
-            tmp = same_day_pcaps[element][:]
-            same_day_pcaps[element] = sorted(tmp, key=lambda x: int(x.split("-")[-1].split(".")[0].strip()))
-
-        #sort per dirA and B
-        for day, pcaps in same_day_pcaps.iteritems():
-
-            dirA = [x for x in pcaps if 'dirA' in x]
-            dirB = [x for x in pcaps if 'dirB' in x]
-
-            if dirA:
-                linkName = dirA[0].split(".")[0].strip()
-            elif dirB:
-                linkName = dirB[0].split(".")[0].strip()
-            else:
-                continue
-            if dirA:
-                pool.apply_async(merge_pcaps_from_list, (dirA, "{}.dirA.{}.pcap".format(linkName, day)), {})
-            if dirB:
-                pool.apply_async(merge_pcaps_from_list, (dirB, "{}.dirB.{}.pcap".format(linkName, day)), {})
-
-
 def merge_times(times_files, output_file):
     """
     Merges a list of pcap files into one
@@ -337,30 +291,46 @@ def merge_times(times_files, output_file):
     cmd = cmd_base % (" ".join(times_files), output_file)
     run_cmd(cmd)
 
-def merge_same_day_times(path_to_dir="."):
+
+
+def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
+
+    same_day_files = {}
+
+    to_clean = []
+
+    _FUNCTION = None
+    if merge_type == "pcap":
+        _FUNCTION = merge_pcaps_from_list
+    elif merge_type  == "times":
+        _FUNCTION = merge_times
 
     with cwd(path_to_dir):
-        pool = multiprocessing.Pool(1)
-        files_to_merge = [x for x in glob.glob("*") if x.endswith("UTC.anon.times")]
+        pool = multiprocessing.Pool(2)
+        files_to_merge = [x for x in glob.glob("*") if x.endswith("UTC.anon.{}".format(merge_type))]
 
         #aggregate per day and sort per time, and dir A and B
-        same_day_pcaps = {}
         for name in files_to_merge:
             day = name.split(".")[2].split("-")[0].strip()
-            if same_day_pcaps.get(day, False):
-                same_day_pcaps[day].append(name)
-            else:
-                same_day_pcaps[day] = [name]
+            if same_day_files.get(day, False):
 
-        for element in same_day_pcaps:
-            tmp = same_day_pcaps[element][:]
-            same_day_pcaps[element] = sorted(tmp, key=lambda x: int(x.split("-")[-1].split(".")[0].strip()))
+                same_day_files[day].append(name)
+            else:
+                same_day_files[day] = [name]
+
+        for element in same_day_files:
+            tmp = same_day_files[element][:]
+            same_day_files[element] = sorted(tmp, key=lambda x: int(x.split("-")[-1].split(".")[0].strip()))
 
         #sort per dirA and B
-        for day, pcaps in same_day_pcaps.items():
+        for day, files in same_day_files.items():
 
-            dirA = [x for x in pcaps if 'dirA' in x]
-            dirB = [x for x in pcaps if 'dirB' in x]
+            dirA = [x for x in files if 'dirA' in x]
+            dirB = [x for x in files if 'dirB' in x]
+
+            if clean:
+                to_clean +=dirA
+                to_clean +=dirB
 
             if dirA:
                 linkName = dirA[0].split(".")[0].strip()
@@ -369,6 +339,23 @@ def merge_same_day_times(path_to_dir="."):
             else:
                 continue
             if dirA:
-                pool.apply_async(merge_times, (dirA, "{}.dirA.{}.times".format(linkName, day)), {})
+                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type)), {})
             if dirB:
-                pool.apply_async(merge_times, (dirB, "{}.dirB.{}.times".format(linkName, day)), {})
+                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type)), {})
+
+    pool.close()
+    pool.join()
+    pool.terminate()
+
+    # cleaning
+    pool = multiprocessing.Pool(4)
+    for file in to_clean:
+        print(file)
+        pool.apply_async(call_in_path, ("rm {}".format(file), path_to_dir), {})
+
+    pool.close()
+    pool.join()
+    pool.terminate()
+
+
+

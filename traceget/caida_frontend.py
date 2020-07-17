@@ -1,6 +1,4 @@
 import npyscreen
-import ipdb
-import traceback
 import queue
 from traceget.caida_backend import *
 
@@ -72,7 +70,7 @@ class CaidaLoadLinks(npyscreen.ActionForm):
         t.join()
 
         caida_state.links_db[username] = tree
-        update_database("db.pickle", caida_state.links_db)
+        update_database("database", caida_state.links_db)
 
         if not tree:
             login = self.parentApp.getForm("Login")
@@ -95,8 +93,8 @@ class CaidaTracesDisplay(npyscreen.ActionFormV2):
         caida_state = self.parentApp.get_caida_base()
         username = caida_state.username
 
-        if is_database("db.pickle"):
-            caida_state.links_db = load_database("db.pickle")
+        if is_database("database"):
+            caida_state.links_db = load_database("database")
         else:
             caida_state.links_db = {}
 
@@ -177,8 +175,8 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
         self.download_types = self.add(npyscreen.TitleMultiSelect, max_height =8, value = [0], name="Select Download Types",
                 values = ["pcaps","timestamps","stats"], scroll_exit=True)
 
-        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0,1,2], name="Post Processing Options",
-                                values=["download", "unzip", "merge"], scroll_exit=True)
+        self.processing_options = self.add(npyscreen.TitleMultiSelect, max_height=8, value=[0,1,2,3], name="Post Processing Options",
+                                values=["download", "unzip", "merge", "clean"], scroll_exit=True)
 
 
 class CaidaTraceDownload(npyscreen.Form):
@@ -212,7 +210,7 @@ class CaidaTraceDownload(npyscreen.Form):
             self.slider.display()
 
 
-        result, q, pool = slider_donwload([], caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
+        result, q, pool = slider_donwload(self.download_links, caida_state.root_out_path, (caida_state.username, caida_state.password), 5)
 
         while True:
             if result.ready():
@@ -296,6 +294,20 @@ class CaidaTraceUnzip(npyscreen.Form):
 
 class CaidaTraceMerge(npyscreen.Form):
 
+    def activate(self):
+
+        caida_state = self.parentApp.get_caida_base()
+
+        # merge files
+        clean = False
+        if "clean" in caida_state.processing_options:
+            clean=True
+
+        merge_same_day_files(caida_state.root_out_path, "pcap", clean)
+        merge_same_day_files(caida_state.root_out_path, "times", clean)
+
+        self.parentApp.switchForm("End")
+
     def create(self):
         pass
 
@@ -324,12 +336,14 @@ class CaidaApp(npyscreen.NPSAppManaged):
         # Download, uncompress, and merge
         self.addForm("TraceDownload", CaidaTraceDownload, name="Downloading Traces")
         self.addForm("TraceUnzip", CaidaTraceUnzip, name="Unzipping Traces")
-        self.addForm("TraceMege", CaidaTraceMerge, name="Merging Traces")
+        self.addForm("TraceMerge", CaidaTraceMerge, name="Merging Traces")
         self.addForm("End", CaidaEnd, name="Done!")
 
     def get_caida_base(self):
         return self.caida_base
 
-if __name__ == "__main__":
+def main():
     npyscreen.wrapper(CaidaApp().run())
 
+if __name__ == "__main__":
+    main()

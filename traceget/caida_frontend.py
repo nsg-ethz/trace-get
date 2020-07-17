@@ -20,8 +20,8 @@ class CaidaLogin(npyscreen.ActionForm):
     #    self.edit()
 
     def create(self):
-        self.username = self.add(npyscreen.TitleText, name="Username: ", value=laurent[0])
-        self.password = self.add(npyscreen.TitlePassword, name="Password: ", value=laurent[1])
+        self.username = self.add(npyscreen.TitleText, name="Username: ")
+        self.password = self.add(npyscreen.TitlePassword, name="Password: ")
 
     def on_ok(self):
 

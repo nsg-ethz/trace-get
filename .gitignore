@@ -9,4 +9,5 @@
 
 /.idea
 
+.DS_Store
 database

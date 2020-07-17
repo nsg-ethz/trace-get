@@ -1,7 +1,6 @@
 import queue
-
 import npyscreen
-
+from appdirs import *
 from traceget.caida_backend import *
 
 
@@ -75,7 +74,7 @@ class CaidaLoadLinks(npyscreen.ActionForm):
         t.join()
 
         caida_state.links_db[username] = tree
-        update_database("database", caida_state.links_db)
+        update_database(user_cache_dir("traceget/") + "database", caida_state.links_db)
 
         if not tree:
             login = self.parentApp.getForm("Login")
@@ -98,9 +97,12 @@ class CaidaTracesDisplay(npyscreen.ActionFormV2):
         caida_state = self.parentApp.get_caida_base()
         username = caida_state.username
 
-        if is_database("database"):
-            caida_state.links_db = load_database("database")
+        if is_database(user_cache_dir("traceget/") + "database"):
+            caida_state.links_db = load_database(user_cache_dir("traceget/") + "database")
         else:
+            # create dir
+            run_check("mkdir -p {}".format(user_cache_dir("traceget/")), True)
+            import ipdb; ipdb.set_trace()
             caida_state.links_db = {}
 
         # try to find our links.. otherwise we need to load

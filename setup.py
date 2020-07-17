@@ -37,7 +37,8 @@ setup(
         'bs4',
         'npyscreen',
         'dill',
-        'requests'
+        'requests',
+        'appdirs'
     ],
     extras_require={}
 )

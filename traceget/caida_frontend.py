@@ -227,6 +227,7 @@ class CaidaTraceDownload(npyscreen.Form):
                 size = q.qsize()
                 self.slider.value = size
                 self.slider.display()
+                time.sleep(5)
 
         pool.terminate()
 
@@ -251,6 +252,7 @@ class CaidaTraceDownload(npyscreen.Form):
                     size = q.qsize()
                     self.slider.value = size
                     self.slider.display()
+                    time.sleep(5)
 
             pool.terminate()
             download_again = check_not_downloaded_files(caida_state.root_out_path, self.download_links)
@@ -285,6 +287,7 @@ class CaidaTraceUnzip(npyscreen.Form):
                 size = q.qsize()
                 self.slider.value = size
                 self.slider.display()
+                time.sleep(5)
 
         pool.terminate()
 

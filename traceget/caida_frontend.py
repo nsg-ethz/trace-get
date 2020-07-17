@@ -102,7 +102,6 @@ class CaidaTracesDisplay(npyscreen.ActionFormV2):
         else:
             # create dir
             run_check("mkdir -p {}".format(user_cache_dir("traceget/")), True)
-            import ipdb; ipdb.set_trace()
             caida_state.links_db = {}
 
         # try to find our links.. otherwise we need to load

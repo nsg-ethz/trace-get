@@ -279,7 +279,7 @@ Merging
 """
 
 
-def merge_times(times_files, output_file):
+def merge_times(times_files, output_file, clean=False):
     """
     Merges a list of pcap files into one
     Args:
@@ -294,11 +294,14 @@ def merge_times(times_files, output_file):
     cmd = cmd_base % (" ".join(times_files), output_file)
     run_cmd(cmd)
 
+    # remove pcap files
+    if clean:
+        cmd = "rm " + " ".join(times_files)
+        run_cmd(cmd)
+
 
 def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
     same_day_files = {}
-
-    to_clean = []
 
     _FUNCTION = None
     if merge_type == "pcap":
@@ -329,10 +332,6 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
             dirA = [x for x in files if 'dirA' in x]
             dirB = [x for x in files if 'dirB' in x]
 
-            if clean:
-                to_clean += dirA
-                to_clean += dirB
-
             if dirA:
                 linkName = dirA[0].split(".")[0].strip()
             elif dirB:
@@ -340,19 +339,9 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
             else:
                 continue
             if dirA:
-                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type)), {})
+                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type, clean)), {})
             if dirB:
-                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type)), {})
-
-    pool.close()
-    pool.join()
-    pool.terminate()
-
-    # cleaning
-    pool = multiprocessing.Pool(4)
-    for file in to_clean:
-        print(file)
-        pool.apply_async(call_in_path, ("rm {}".format(file), path_to_dir), {})
+                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type, clean)), {})
 
     pool.close()
     pool.join()

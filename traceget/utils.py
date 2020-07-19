@@ -163,7 +163,7 @@ def merge_pcaps(global_dir, output_file):
         subprocess.call(cmd, shell=True)
 
 
-def merge_pcaps_from_list(pcap_files, output_file):
+def merge_pcaps_from_list(pcap_files, output_file, clean=False):
     """
     Merges a list of pcap files into one
     Args:
@@ -179,6 +179,11 @@ def merge_pcaps_from_list(pcap_files, output_file):
     cmd_base = "mergecap -F %s -w %s " % (file_format, output_file) + " %s"
     cmd = cmd_base % " ".join(pcap_files)
     run_cmd(cmd)
+
+    # remove pcap files
+    if clean:
+        cmd = "rm " + " ".join(pcap_files)
+        run_cmd(cmd)
 
 
 def merge_pcaps_dir(dir, output_file, regex= ".*pcap"):

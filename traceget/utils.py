@@ -183,6 +183,7 @@ def merge_pcaps_from_list(pcap_files, output_file, clean=False):
     # remove pcap files
     if clean:
         cmd = "rm " + " ".join(pcap_files)
+        print(cmd)
         run_cmd(cmd)
 
 

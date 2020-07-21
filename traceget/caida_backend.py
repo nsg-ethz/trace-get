@@ -302,7 +302,6 @@ def merge_times(times_files, output_file, clean=False):
 
 def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
     same_day_files = {}
-
     _FUNCTION = None
     if merge_type == "pcap":
         _FUNCTION = merge_pcaps_from_list
@@ -339,9 +338,10 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
             else:
                 continue
             if dirA:
-                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type, clean)), {})
+                #pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean), {})
+                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean), {})
             if dirB:
-                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type, clean)), {})
+                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type), clean), {})
 
     pool.close()
     pool.join()

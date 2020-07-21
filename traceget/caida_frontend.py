@@ -173,6 +173,8 @@ class CaidaSelectProcessingOptions(npyscreen.ActionFormV2):
             self.parentApp.switchForm("TraceDownload")
         elif "unzip" in caida_state.processing_options:
             self.parentApp.switchForm("TraceUnzip")
+        elif "merge" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceMerge")
         else:
             self.parentApp.switchForm("End")
 
@@ -259,6 +261,8 @@ class CaidaTraceDownload(npyscreen.Form):
 
         if "unzip" in caida_state.processing_options:
             self.parentApp.switchForm("TraceUnzip")
+        elif "merge" in caida_state.processing_options:
+            self.parentApp.switchForm("TraceMerge")
         else:
             self.parentApp.switchForm("End")
 

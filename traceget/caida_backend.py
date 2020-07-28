@@ -309,7 +309,7 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
         _FUNCTION = merge_times
 
     with cwd(path_to_dir):
-        pool = multiprocessing.Pool(2)
+        pool = multiprocessing.Pool(1)
         files_to_merge = [x for x in glob.glob("*") if x.endswith("UTC.anon.{}".format(merge_type))]
 
         # aggregate per day and sort per time, and dir A and B
@@ -339,9 +339,11 @@ def merge_same_day_files(path_to_dir=".", merge_type="pcap", clean=False):
                 continue
             if dirA:
                 #pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean), {})
-                pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean), {})
+                _FUNCTION(dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean)
+                #pool.apply_async(_FUNCTION, (dirA, "{}.dirA.{}.{}".format(linkName, day, merge_type), clean), {})
             if dirB:
-                pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type), clean), {})
+                #pool.apply_async(_FUNCTION, (dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type), clean), {})
+                _FUNCTION(dirB, "{}.dirB.{}.{}".format(linkName, day, merge_type), clean)
 
     pool.close()
     pool.join()
